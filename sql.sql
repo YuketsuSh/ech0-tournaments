@@ -1,0 +1,17 @@
+CREATE TABLE Tournaments (
+    TournamentID INT AUTO_INCREMENT PRIMARY KEY,
+    Name VARCHAR(255) NOT NULL,
+    Date DATETIME NOT NULL,
+    Type VARCHAR(100) NOT NULL,
+    Duration VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE Registrations (
+    RegistrationID INT AUTO_INCREMENT PRIMARY KEY,
+    TournamentID INT,
+    UserID VARCHAR(255) NOT NULL,
+    Email VARCHAR(255) NOT NULL,
+    ClanTag VARCHAR(100) NOT NULL,
+    Players VARCHAR(255) NOT NULL,
+    FOREIGN KEY (TournamentID) REFERENCES Tournaments(TournamentID)
+);
