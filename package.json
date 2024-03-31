@@ -1,0 +1,24 @@
+{
+  "name": "ech0-tournaments",
+  "version": "1.0.0",
+  "description": "bot of gestionnary tournaments",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/YuketsuSh/ech0-tournaments.git"
+  },
+  "author": "Yuketsu",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/YuketsuSh/ech0-tournaments/issues"
+  },
+  "homepage": "https://github.com/YuketsuSh/ech0-tournaments#readme",
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "fs": "^0.0.1-security",
+    "mysql": "^2.18.1"
+  }
+}
