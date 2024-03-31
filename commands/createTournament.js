@@ -1,4 +1,5 @@
 const { MessageActionRow, MessageButton } = require('discord.js');
+const db = require('../events/db.js');
 
 module.exports = {
     name: 'createtournament',
