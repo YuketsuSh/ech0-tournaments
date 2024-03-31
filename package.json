@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/YuketsuSh/ech0-tournaments#readme",
   "dependencies": {
+    "discord-modals": "^1.3.9",
     "discord.js": "^14.14.1",
     "fs": "^0.0.1-security",
     "moment": "^2.30.1",

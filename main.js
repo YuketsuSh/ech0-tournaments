@@ -1,6 +1,12 @@
 const fs = require('fs');
-const { Client, Collection } = require('discord.js');
-const client = new Client();
+const { Client, Collection, GatewayIntentBits } = require('discord.js');
+const client = new Client({
+    intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.MessageContent
+    ]
+});
 
 client.commands = new Collection();
 client.events = new Collection();
@@ -21,4 +27,4 @@ for (const file of eventFiles) {
     }
 }
 
-client.login('YOUR_BOT_TOKEN');
+client.login('MTE4MDExNDY1MTYxMTEzNjAxMA.G6ZuRT.4owRwQ__ragusIki2gqflQ-kYoKVyZDvIKb5qc');
