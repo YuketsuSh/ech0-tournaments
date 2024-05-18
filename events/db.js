@@ -1,9 +1,10 @@
 const mysql = require('mysql');
+const { dbhost, dbuser, dbpass, dbname } = require('../config.json');
 const connection = mysql.createConnection({
-    host: 'YOUR_HOST',
-    user: 'YOUR_USER',
-    password: 'YOUR_PASSWORD',
-    database: 'YOUR_DATABASE'
+    host: `${dbhost}`,
+    user: `${dbuser}`,
+    password: `${dbpass}`,
+    database: `${dbname}`
 });
 
 connection.connect(error => {

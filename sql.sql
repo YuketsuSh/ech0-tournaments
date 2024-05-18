@@ -3,7 +3,8 @@ CREATE TABLE Tournaments (
     Name VARCHAR(255) NOT NULL,
     Date DATETIME NOT NULL,
     Type VARCHAR(100) NOT NULL,
-    Duration VARCHAR(50) NOT NULL
+    Duration VARCHAR(50) NOT NULL,
+    Channel VARCHAR(50) NOT NULL
 );
 
 CREATE TABLE Registrations (

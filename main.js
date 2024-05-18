@@ -1,75 +1,82 @@
-const fs = require('fs');
-const { Client, Collection, Intents } = require('discord.js');
+const { Client, GatewayIntentBits, Collection, REST, Routes } = require('discord.js');
+const fs = require('fs/promises');
+const { token, clientId, guildId } = require('./config.json');
+
 const client = new Client({
     intents: [
-        Intents.FLAGS.GUILDS,
-        Intents.FLAGS.GUILD_MESSAGES,
-        Intents.FLAGS.GUILD_MESSAGE_REACTIONS
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.MessageContent
     ]
 });
 
 client.commands = new Collection();
-client.events = new Collection();
 
-const loadCommands = (dir) => {
-    console.log("Loading commands...");
-    const files = fs.readdirSync(dir);
-    for (const file of files) {
-        const filePath = `${dir}/${file}`;
-        const stat = fs.lstatSync(filePath);
-        if (stat.isDirectory()) {
-            loadCommands(filePath);
-        } else if (file.endsWith('.js')) {
-            const command = require(filePath);
-            client.commands.set(command.name, command);
-            console.log(`Command loaded: ${command.name}`);
+const loadCommands = async () => {
+    try {
+        const cmdFiles = await fs.readdir('./commands');
+        const commands = [];
+
+        for (const file of cmdFiles.filter(file => file.endsWith('.js'))) {
+            const cmd = require(`./commands/${file}`);
+            if (cmd.data && cmd.data.name) {
+                client.commands.set(cmd.data.name, cmd);
+                commands.push(cmd.data.toJSON());
+            } else {
+                console.warn(`Command at ./commands/${file} is missing "data" or "data.name"`);
+            }
         }
+
+        const rest = new REST({ version: '10' }).setToken(token);
+        console.log('Starting refresh of application slash commands.');
+        await rest.put(Routes.applicationGuildCommands(clientId, guildId), { body: commands });
+        console.log('Successfully reloaded application slash commands.');
+    } catch (error) {
+        console.error('Error loading commands:', error);
     }
-    console.log("Commands loaded successfully.");
 };
 
-const loadEvents = (dir) => {
-    console.log("Loading events...");
-    const files = fs.readdirSync(dir);
-    for (const file of files) {
-        const filePath = `${dir}/${file}`;
-        const stat = fs.lstatSync(filePath);
-        if (stat.isDirectory()) {
-            loadEvents(filePath);
-        } else if (file.endsWith('.js')) {
-            const event = require(filePath);
+const loadEvents = async () => {
+    try {
+        const eventFiles = await fs.readdir('./events');
+
+        for (const file of eventFiles.filter(file => file.endsWith('.js'))) {
+            const event = require(`./events/${file}`);
             if (event.once) {
                 client.once(event.name, (...args) => event.execute(...args, client));
             } else {
                 client.on(event.name, (...args) => event.execute(...args, client));
             }
-            console.log(`Event loaded: ${event.name}`);
         }
+    } catch (error) {
+        console.error('Error loading events:', error);
     }
-    console.log("Events loaded successfully.");
 };
 
-const commandDir = './commands';
-const eventDir = './events';
+client.on('interactionCreate', async interaction => {
+    console.log('Interaction received');
+    if (!interaction.isCommand()) return;
 
-loadCommands(commandDir);
-loadEvents(eventDir);
+    const command = client.commands.get(interaction.commandName);
+    console.log(`Command received: ${interaction.commandName}`);
 
-client.on('messageCreate', async (message) => {
-    if (!message.content.startsWith('!') || message.author.bot) return;
+    if (!command) {
+        console.log('No command found');
+        return;
+    }
 
-    const args = message.content.slice(1).trim().split(/ +/);
-    const commandName = args.shift().toLowerCase();
-
-    if (!client.commands.has(commandName)) return;
-
-    const command = client.commands.get(commandName);
     try {
-        await command.execute(message, args, client);
+        await command.execute(interaction);
     } catch (error) {
         console.error(error);
-        message.reply('There was an error executing that command.');
+        await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
     }
 });
 
-client.login('YOUR_TOKEN_BOT');
+(async () => {
+    await loadCommands();
+    await loadEvents();
+    client.login(token).catch(error => {
+        console.error('Error logging in:', error);
+    });
+})();

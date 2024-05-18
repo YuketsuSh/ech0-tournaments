@@ -1,76 +1,78 @@
-const { Modal, TextInputComponent, showModal } = require('discord-modals');
+const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
 const db = require('./db.js');
 
 module.exports = {
     name: 'interactionCreate',
-    execute: async (interaction, client) => {
+    async execute(interaction, client) {
+        console.log('Interaction handler activated');
+
         if (interaction.isButton()) {
             const [action, tournamentId] = interaction.customId.split('-');
 
             if (action === 'register') {
-                const modal = new Modal()
-                    .setCustomId(`registerModal-${tournamentId}`)
-                    .setTitle('Tournament Registration')
-                    .addComponents(
-                        new TextInputComponent()
+                try {
+                    const modal = new ModalBuilder()
+                        .setCustomId(`registerModal-${tournamentId}`)
+                        .setTitle('Tournament Registration');
+
+                    const emailRow = new ActionRowBuilder().addComponents(
+                        new TextInputBuilder()
                             .setCustomId('email')
                             .setLabel("Enter your email")
-                            .setStyle('SHORT')
-                            .setRequired(true),
-                        new TextInputComponent()
-                            .setCustomId('clanTag')
-                            .setLabel("Enter your clan tag")
-                            .setStyle('SHORT')
-                            .setRequired(true),
-                        new TextInputComponent()
-                            .setCustomId('player1')
-                            .setLabel("Player 1 Name")
-                            .setStyle('SHORT')
-                            .setRequired(true),
-                        new TextInputComponent()
-                            .setCustomId('player2')
-                            .setLabel("Player 2 Name")
-                            .setStyle('SHORT')
-                            .setRequired(true),
-                        new TextInputComponent()
-                            .setCustomId('player3')
-                            .setLabel("Player 3 Name (Optional)")
-                            .setStyle('SHORT')
-                            .setRequired(false),
-                        new TextInputComponent()
-                            .setCustomId('player4')
-                            .setLabel("Player 4 Name (Optional)")
-                            .setStyle('SHORT')
-                            .setRequired(false)
+                            .setStyle(TextInputStyle.Short)
+                            .setRequired(true)
                     );
 
-                showModal(modal, {
-                    client: client,
-                    interaction: interaction
-                });
+                    const clanTagRow = new ActionRowBuilder().addComponents(
+                        new TextInputBuilder()
+                            .setCustomId('clanTag')
+                            .setLabel("Enter your clan tag")
+                            .setStyle(TextInputStyle.Short)
+                            .setRequired(true)
+                    );
+
+                    const playersRow = new ActionRowBuilder().addComponents(
+                        new TextInputBuilder()
+                            .setCustomId('players')
+                            .setLabel("Enter your teammates (comma-separated)")
+                            .setStyle(TextInputStyle.Paragraph)
+                            .setRequired(true)
+                    );
+
+                    modal.addComponents(emailRow, clanTagRow, playersRow);
+
+                    await interaction.showModal(modal);
+                    console.log('Modal shown successfully');
+                } catch (error) {
+                    console.error('Error showing modal:', error);
+                    await interaction.reply({ content: 'An error occurred while showing the modal.', ephemeral: true });
+                }
             }
         } else if (interaction.isModalSubmit()) {
-            const [action, tournamentId] = interaction.customId.split('-');
+            try {
+                const [action, tournamentId] = interaction.customId.split('-');
 
-            if (action === 'registerModal') {
-                const email = interaction.fields.getTextInputValue('email');
-                const clanTag = interaction.fields.getTextInputValue('clanTag');
-                const player1 = interaction.fields.getTextInputValue('player1');
-                const player2 = interaction.fields.getTextInputValue('player2');
-                const player3 = interaction.fields.getTextInputValue('player3');
-                const player4 = interaction.fields.getTextInputValue('player4');
+                if (action === 'registerModal') {
+                    const email = interaction.fields.getTextInputValue('email');
+                    const clanTag = interaction.fields.getTextInputValue('clanTag');
+                    const players = interaction.fields.getTextInputValue('players');
 
-                const players = [player1, player2, player3, player4].filter(Boolean).join(', ');
+                    console.log('Inserting registration into database:', { tournamentId, userId: interaction.user.id, email, clanTag, players });
 
-                db.query('INSERT INTO Registrations (TournamentID, UserID, Email, ClanTag, Players) VALUES (?, ?, ?, ?, ?)',
-                    [tournamentId, interaction.user.id, email, clanTag, players], (err, results) => {
-                        if (err) {
-                            console.error(err);
-                            interaction.reply({ content: 'An error occurred during the registration.', ephemeral: true });
-                            return;
-                        }
-                        interaction.reply({ content: 'You have been registered successfully!', ephemeral: true });
-                    });
+                    db.query('INSERT INTO Registrations (TournamentID, UserID, Email, ClanTag, Players) VALUES (?, ?, ?, ?, ?)',
+                        [tournamentId, interaction.user.id, email, clanTag, players], (err, results) => {
+                            if (err) {
+                                console.error('Database error:', err);
+                                interaction.reply({ content: 'An error occurred during the registration.', ephemeral: true });
+                                return;
+                            }
+                            console.log('Registration successful');
+                            interaction.reply({ content: 'You have been registered successfully!', ephemeral: true });
+                        });
+                }
+            } catch (error) {
+                console.error('Error handling modal submit:', error);
+                await interaction.reply({ content: 'An error occurred while handling the modal submission.', ephemeral: true });
             }
         }
     }
